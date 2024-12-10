@@ -56,26 +56,23 @@ public class PackageDiscoveryService(IPackagesContext context, IPackageDiscovery
                     {
                         continue;
                     }
-                    NuGetPackageModel model = ExtractPackageInfo(projectFile, packageName, packageName, netVersion, prefixName);
+                    NuGetPackageModel model = ExtractPackageInfo(projectFile, packageName, netVersion, prefixName);
                     output.Add(model);
                 }
             }
         }
         return output;
     }
-    private NuGetPackageModel ExtractPackageInfo(string projectFile, string packageName, string folder, string netVersion, string prefixName)
+    private NuGetPackageModel ExtractPackageInfo(string projectFile, string packageName, string netVersion, string prefixName)
     {
         CsProjEditor editor = new(projectFile);
         NuGetPackageModel model = new();
         //you can customize any other stuff but some things are forced.
+        model.PackageName = packageName;
         handler.CustomizePackageModel(model);
-        
         model.PackageName = packageName;
         model.CsProjPath = projectFile;
         model.FeedType = handler.GetFeedType(projectFile);
-
-
-
         model.NugetPackagePath = GetNuGetPackagePath(projectFile);
         model.Framework = editor.GetTargetFramework();
         if (model.Framework == EnumTargetFramework.NetStandard || model.FeedType == EnumFeedType.Local)
@@ -88,7 +85,10 @@ public class PackageDiscoveryService(IPackagesContext context, IPackageDiscovery
         }
         if (model.FeedType == EnumFeedType.Public)
         {
-            model.PrefixForPackageName = prefixName; //must be forced to this.
+            if (handler.NeedsPrefix(model, editor))
+            {
+                model.PrefixForPackageName = prefixName; //must be forced to this.
+            }
         }
         return model;
     }

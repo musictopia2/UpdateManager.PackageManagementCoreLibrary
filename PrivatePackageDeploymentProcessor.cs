@@ -1,5 +1,5 @@
 ﻿namespace UpdateManager.PackageManagementCoreLibrary;
-public class PrivatePackageDeploymentProcessor(IPackagesContext context, INugetPacker packer)
+public class PrivatePackageDeploymentProcessor(IPackagesContext context, INugetPacker packer, IPackageDiscoveryHandler handler)
 {
     // The main post-build method, specifically for private feed deployment
     public async Task ProcessPostBuildToPrivateFeedAsync(PostBuildArguments arguments)
@@ -8,6 +8,7 @@ public class PrivatePackageDeploymentProcessor(IPackagesContext context, INugetP
         {
             var configuration = bb1.Configuration ?? throw new CustomBasicException("Configuration is not initialized.");
             string netVersion = configuration.GetNetVersion();
+            string prefixName = bb1.Configuration!.GetPackagePrefixFromConfig();
             BasicList<NuGetPackageModel> packages = await context.GetPackagesAsync();
             NuGetPackageModel? package = packages.SingleOrDefault(x => x.PackageName == arguments.ProjectName);
             if (package is not null)
@@ -22,10 +23,12 @@ public class PrivatePackageDeploymentProcessor(IPackagesContext context, INugetP
             {
                 package = new NuGetPackageModel
                 {
-                    CsProjPath = Path.Combine(arguments.ProjectDirectory, arguments.ProjectFile),
                     PackageName = arguments.ProjectName,
-                    NugetPackagePath = Path.Combine(arguments.ProjectDirectory, "bin", "Release")
                 };
+                handler.CustomizePackageModel(package);
+                package.PackageName = arguments.ProjectName;
+                package.CsProjPath = Path.Combine(arguments.ProjectDirectory, arguments.ProjectFile);
+                package.NugetPackagePath = Path.Combine(arguments.ProjectDirectory, "bin", "Release");
                 CsProjEditor editor = new(package.CsProjPath);
                 EnumFeedType? feedType = editor.GetFeedType() ?? throw new CustomBasicException("No feed type found in the csproj file");
                 package.FeedType = feedType.Value;
@@ -39,6 +42,13 @@ public class PrivatePackageDeploymentProcessor(IPackagesContext context, INugetP
                 else
                 {
                     package.Version = "1.0.1";
+                }
+                if (package.FeedType == EnumFeedType.Public)
+                {
+                    if (handler.NeedsPrefix(package, editor))
+                    {
+                        package.PrefixForPackageName = prefixName;
+                    }
                 }
                 await context.AddPackageAsync(package);
             }
