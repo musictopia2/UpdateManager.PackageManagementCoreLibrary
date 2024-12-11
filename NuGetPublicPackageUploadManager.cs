@@ -9,6 +9,7 @@ public class NuGetPublicPackageUploadManager(IPackagesContext packagesContext,
     {
         string feedUrl = bb1.Configuration!.GetStagingPackagePath();
         BasicList<UploadedPackageModel> list = await GetUploadedPackagesAsync(feedUrl, cancellationToken);
+        list = list.ToBasicList(); //try to make a copy here too.
         await UploadPackagesAsync(list, cancellationToken);
         await CheckPackagesAsync(list, feedUrl);
     }
@@ -48,7 +49,6 @@ public class NuGetPublicPackageUploadManager(IPackagesContext packagesContext,
     }
     private async Task<BasicList<UploadedPackageModel>> GetUploadedPackagesAsync(string feedUrl, CancellationToken cancellationToken)
     {
-        
         var stagingPackages = await LocalNuGetFeedManager.GetAllPackagesAsync(feedUrl, cancellationToken);
         var allPackages = await packagesContext.GetPackagesAsync();
         var uploadedPackages = await uploadContext.GetAllUploadedPackagesAsync();
@@ -86,6 +86,7 @@ public class NuGetPublicPackageUploadManager(IPackagesContext packagesContext,
                 output.Add(uploadedPackage);
             }
         }
+        await uploadContext.SaveUpdatedUploadedListAsync(output); //i think.
         return output;
     }
 }
