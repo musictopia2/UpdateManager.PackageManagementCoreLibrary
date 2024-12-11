@@ -35,9 +35,9 @@ public class PrivatePackageDeploymentProcessor(IPackagesContext context, INugetP
                 // Determine the target framework (NetStandard or NetRuntime)
                 EnumTargetFramework targetFramework = GetTargetFrameworkFromOutputDirectory(arguments.OutputDirectory);
                 package.Framework = targetFramework;
-                if (package.FeedType == EnumFeedType.Public || targetFramework == EnumTargetFramework.NetStandard)
+                if (package.FeedType == EnumFeedType.Public && targetFramework == EnumTargetFramework.NetRuntime)
                 {
-                    package.Version = $"{netVersion}.1.1";
+                    package.Version = $"{netVersion}.0.1";
                 }
                 else
                 {
