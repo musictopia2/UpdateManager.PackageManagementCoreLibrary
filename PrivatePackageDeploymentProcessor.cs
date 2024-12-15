@@ -11,11 +11,20 @@ public class PrivatePackageDeploymentProcessor(IPackagesContext context, INugetP
             string prefixName = bb1.Configuration!.GetPackagePrefixFromConfig();
             BasicList<NuGetPackageModel> packages = await context.GetPackagesAsync();
             NuGetPackageModel? package = packages.SingleOrDefault(x => x.PackageName == arguments.ProjectName);
+            bool rets;
             if (package is not null)
             {
                 if (package.TemporarilyIgnore)
                 {
                     return; //this means can return because you are ignoring.
+                }
+                
+                string directory = package.GetRepositoryDirectory();
+                rets = await GitBranchManager.IsOnDefaultBranchAsync(directory);
+                if (rets == false)
+                {
+                    Console.WriteLine("You are not on default branch.  Therefore, will not update the packages");
+                    return;
                 }
                 await UpdatePackageVersionAsync(package);
             }
@@ -28,6 +37,13 @@ public class PrivatePackageDeploymentProcessor(IPackagesContext context, INugetP
                 handler.CustomizePackageModel(package);
                 package.PackageName = arguments.ProjectName;
                 package.CsProjPath = Path.Combine(arguments.ProjectDirectory, arguments.ProjectFile);
+                string directory = package.GetRepositoryDirectory();
+                rets = await GitBranchManager.IsOnDefaultBranchAsync(directory);
+                if (rets == false)
+                {
+                    Console.WriteLine("You are not on default branch.  Therefore, will not create or update the packages.");
+                    return;
+                }
                 package.NugetPackagePath = Path.Combine(arguments.ProjectDirectory, "bin", "Release");
                 CsProjEditor editor = new(package.CsProjPath);
                 EnumFeedType? feedType = editor.GetFeedType() ?? throw new CustomBasicException("No feed type found in the csproj file");
