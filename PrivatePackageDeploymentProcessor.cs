@@ -14,7 +14,7 @@ public class PrivatePackageDeploymentProcessor(IPackagesContext context, INugetP
             bool rets;
             if (package is not null)
             {
-                if (package.TemporarilyIgnore)
+                if (package.IsExcluded)
                 {
                     return; //this means can return because you are ignoring.
                 }
