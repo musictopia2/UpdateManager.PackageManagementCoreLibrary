@@ -52,7 +52,7 @@ public class PackageDiscoveryService(IPackagesContext context, IPackageDiscovery
                         continue; // Skip this package
                     }
 
-                    if (handler.CanIncludeProject(packageName) == false)
+                    if (handler.CanIncludeProject(projectFile) == false)
                     {
                         continue;
                     }
