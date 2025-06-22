@@ -15,7 +15,7 @@ public static class ServiceExtensions
             .AddTransient<PackageDiscoveryService>();
         return services;
     }
-    public static IServiceCollection RegisterPublicUploadServices(this IServiceCollection services)
+    public static IServiceCollection RegisterPublicPackageUploadServices(this IServiceCollection services)
     {
         services.AddSingleton<IPackagesContext, FilePackagesContext>()
             .AddSingleton<IUploadedPackagesStorage, FileUploadedPackagesStorage>()
