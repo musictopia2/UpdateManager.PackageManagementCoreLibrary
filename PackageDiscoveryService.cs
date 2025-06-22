@@ -3,7 +3,7 @@ public class PackageDiscoveryService(IPackagesContext context, IPackageDiscovery
 {
     public async Task AddPackageAsync(NuGetPackageModel package)
     {
-        string programPath = bb1.Configuration!.GetFeedPostProcessorProgramFromConfig();
+        string programPath = bb1.Configuration!.GetPackagePostBuildFeedProcessorProgram();
         //even if i add to the list as i go along, should not be bad.
         CsProjEditor editor = new(package.CsProjPath);
         editor.RemovePostBuildCommand();
