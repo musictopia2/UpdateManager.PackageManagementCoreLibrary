@@ -57,13 +57,13 @@ public class NuGetPublicPackageUploadManager(IPackagesContext packagesContext,
         foreach (var name in stagingPackages)
         {
             //this means needs to add package.
-            var ourPackage = allPackages.Single(x => x.GetPackageID().Equals(name, StringComparison.CurrentCultureIgnoreCase));
+            var ourPackage = allPackages.SingleOrDefault(x => x.GetPackageID().Equals(name, StringComparison.CurrentCultureIgnoreCase));
             var uploadedPackage = uploadedPackages.SingleOrDefault(x => x.PackageId.Equals(name, StringComparison.CurrentCultureIgnoreCase));
             //i am guessing if you are now temporarily ignoring it, still okay to process because it was the past.
             //same thing for development.
 
 
-            if (uploadedPackage is null)
+            if (uploadedPackage is null && ourPackage is not null)
             {
                 string packageId = ourPackage.GetPackageID();
                 uploadedPackage = new()
@@ -74,7 +74,7 @@ public class NuGetPublicPackageUploadManager(IPackagesContext packagesContext,
                 };
                 output.Add(uploadedPackage);
             }
-            else
+            else if (ourPackage is not null && uploadedPackage is not null)
             {
                 if (uploadedPackage.Version != ourPackage.Version)
                 {
