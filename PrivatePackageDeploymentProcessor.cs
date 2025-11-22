@@ -8,7 +8,7 @@ public class PrivatePackageDeploymentProcessor(IPackagesContext context, INugetP
         {
             var configuration = bb1.Configuration ?? throw new CustomBasicException("Configuration is not initialized.");
             string netVersion = configuration.GetNetVersion();
-            string prefixName = bb1.Configuration!.GetPackagePrefixFromConfig();
+            string prefixName = bb1.Configuration!.PackagePrefixFromConfig;
             BasicList<NuGetPackageModel> packages = await context.GetPackagesAsync();
             NuGetPackageModel? package = packages.SingleOrDefault(x => x.PackageName == arguments.ProjectName);
             bool rets;
@@ -19,7 +19,7 @@ public class PrivatePackageDeploymentProcessor(IPackagesContext context, INugetP
                     return; //this means can return because you are ignoring.
                 }
                 
-                string directory = package.GetRepositoryDirectory();
+                string directory = package.RepositoryDirectory;
                 rets = await GitBranchManager.IsOnDefaultBranchAsync(directory);
                 if (rets == false)
                 {
@@ -37,7 +37,7 @@ public class PrivatePackageDeploymentProcessor(IPackagesContext context, INugetP
                 handler.CustomizePackageModel(package);
                 package.PackageName = arguments.ProjectName;
                 package.CsProjPath = Path.Combine(arguments.ProjectDirectory, arguments.ProjectFile);
-                string directory = package.GetRepositoryDirectory();
+                string directory = package.RepositoryDirectory;
                 rets = await GitBranchManager.IsOnDefaultBranchAsync(directory);
                 if (rets == false)
                 {
@@ -71,7 +71,7 @@ public class PrivatePackageDeploymentProcessor(IPackagesContext context, INugetP
             await CreateAndUploadNuGetPackageAsync(package);
             if (package.Development == false)
             {
-                string developmentFeed = configuration.GetDevelopmentPackagePath();
+                string developmentFeed = configuration.DevelopmentPackagePath;
                 await LocalNuGetFeedManager.DeletePackageFolderAsync(developmentFeed, package.PackageName); //if its not there, just ignore.
             }
         }
@@ -112,9 +112,9 @@ public class PrivatePackageDeploymentProcessor(IPackagesContext context, INugetP
     }
     private static string GetFeedToUse(NuGetPackageModel package)
     {
-        string stagingPath = bb1.Configuration!.GetStagingPackagePath();
-        string developmentPath = bb1.Configuration!.GetDevelopmentPackagePath();
-        string localPath = bb1.Configuration!.GetPrivatePackagePath();
+        string stagingPath = bb1.Configuration!.StagingPackagePath;
+        string developmentPath = bb1.Configuration!.DevelopmentPackagePath;
+        string localPath = bb1.Configuration!.PrivatePackagePath;
         if (package.Development)
         {
             return developmentPath;

@@ -7,7 +7,7 @@ public class NuGetPublicPackageUploadManager(IPackagesContext packagesContext,
     // The method that does all the work of checking, uploading, and tracking
     public async Task UploadPackagesAsync(CancellationToken cancellationToken = default)
     {
-        string feedUrl = bb1.Configuration!.GetStagingPackagePath();
+        string feedUrl = bb1.Configuration!.StagingPackagePath;
         BasicList<UploadedPackageModel> list = await GetUploadedPackagesAsync(feedUrl, cancellationToken);
         list = list.ToBasicList(); //try to make a copy here too.
         await UploadPackagesAsync(list, cancellationToken);
@@ -57,7 +57,7 @@ public class NuGetPublicPackageUploadManager(IPackagesContext packagesContext,
         foreach (var name in stagingPackages)
         {
             //this means needs to add package.
-            var ourPackage = allPackages.SingleOrDefault(x => x.GetPackageID().Equals(name, StringComparison.CurrentCultureIgnoreCase));
+            var ourPackage = allPackages.SingleOrDefault(x => x.PackageID.Equals(name, StringComparison.CurrentCultureIgnoreCase));
             var uploadedPackage = uploadedPackages.SingleOrDefault(x => x.PackageId.Equals(name, StringComparison.CurrentCultureIgnoreCase));
             //i am guessing if you are now temporarily ignoring it, still okay to process because it was the past.
             //same thing for development.
@@ -65,7 +65,7 @@ public class NuGetPublicPackageUploadManager(IPackagesContext packagesContext,
 
             if (uploadedPackage is null && ourPackage is not null)
             {
-                string packageId = ourPackage.GetPackageID();
+                string packageId = ourPackage.PackageID;
                 uploadedPackage = new()
                 {
                     PackageId = packageId,

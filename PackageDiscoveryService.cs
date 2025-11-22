@@ -3,7 +3,7 @@ public class PackageDiscoveryService(IPackagesContext context, IPackageDiscovery
 {
     public async Task AddPackageAsync(NuGetPackageModel package)
     {
-        string programPath = bb1.Configuration!.GetPackagePostBuildFeedProcessorProgram();
+        string programPath = bb1.Configuration!.PackagePostBuildFeedProcessorProgram;
         //even if i add to the list as i go along, should not be bad.
         CsProjEditor editor = new(package.CsProjPath);
         editor.RemovePostBuildCommand();
@@ -19,7 +19,7 @@ public class PackageDiscoveryService(IPackagesContext context, IPackageDiscovery
         var existingPackageNames = new HashSet<string>(existingPackages.Select(p => p.PackageName));
         BasicList<string> folders = await handler.GetPackageDirectoriesAsync();
         string netVersion = bb1.Configuration!.GetNetVersion();
-        string prefixName = bb1.Configuration!.GetPackagePrefixFromConfig();
+        string prefixName = bb1.Configuration!.PackagePrefixFromConfig;
         foreach (var folder in folders)
         {
             if (ff1.DirectoryExists(folder) == false)
