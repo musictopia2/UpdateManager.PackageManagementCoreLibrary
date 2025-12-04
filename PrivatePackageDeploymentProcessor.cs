@@ -7,7 +7,7 @@ public class PrivatePackageDeploymentProcessor(IPackagesContext context, INugetP
         try
         {
             var configuration = bb1.Configuration ?? throw new CustomBasicException("Configuration is not initialized.");
-            string netVersion = configuration.GetNetVersion();
+            string netVersion = configuration.NetVersion;
             string prefixName = bb1.Configuration!.PackagePrefixFromConfig;
             BasicList<NuGetPackageModel> packages = await context.GetPackagesAsync();
             NuGetPackageModel? package = packages.SingleOrDefault(x => x.PackageName == arguments.ProjectName);

@@ -18,7 +18,7 @@ public class PackageDiscoveryService(IPackagesContext context, IPackageDiscovery
         BasicList<NuGetPackageModel> existingPackages = await context.GetPackagesAsync();
         var existingPackageNames = new HashSet<string>(existingPackages.Select(p => p.PackageName));
         BasicList<string> folders = await handler.GetPackageDirectoriesAsync();
-        string netVersion = bb1.Configuration!.GetNetVersion();
+        string netVersion = bb1.Configuration!.NetVersion;
         string prefixName = bb1.Configuration!.PackagePrefixFromConfig;
         foreach (var folder in folders)
         {
