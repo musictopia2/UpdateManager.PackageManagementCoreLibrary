@@ -104,6 +104,29 @@ public class PrivatePackageDeploymentProcessor(IPackagesContext context, INugetP
         {
             throw new CustomBasicException("Failed to publish nuget package to private feed");
         }
+        INugetMirror? mirror;
+        if (package.Development)
+        {
+            mirror = LocalNuGetFeedManager.DevelopmentMirror;
+            
+        }
+        else if (package.FeedType == EnumFeedType.Public)
+        {
+            mirror = LocalNuGetFeedManager.StagingMirror;
+        }
+        else
+        {
+            mirror = LocalNuGetFeedManager.PrivateMirror;
+        }
+        if (mirror is null)
+        {
+            return;
+        }
+        uploaded = await mirror.MirrorLocalFeedAsync(package.FeedType, package.Development, nugetFile);
+        if (uploaded == false)
+        {
+            Console.WriteLine("Failed to publish to mirror feed");
+        }
     }
     private async Task UpdatePackageVersionAsync(NuGetPackageModel package)
     {
