@@ -17,16 +17,12 @@ public static class ServiceExtensions
                 .AddTransient<PackageDiscoveryService>();
             return services;
         }
-        public IServiceCollection RegisterPublicPackageUploadServices<TUploader>()
-            where TUploader : class, INugetUploader
+        public IServiceCollection RegisterPublicPackageUploadServices()
         {
             services.AddSingleton<IPackagesContext, FilePackagesContext>()
                 .AddSingleton<IUploadedPackagesStorage, FileUploadedPackagesStorage>()
-                .AddSingleton<INugetUploader, TUploader>()
                 .AddSingleton<NuGetPublicPackageUploadManager>();
-
             return services;
         }
     }
-    
 }
