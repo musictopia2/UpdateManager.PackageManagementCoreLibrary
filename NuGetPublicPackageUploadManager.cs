@@ -4,6 +4,131 @@ public class NuGetPublicPackageUploadManager(IPackagesContext packagesContext,
     INugetUploader uploader
     )
 {
+    public async Task<bool> WaitForRequiredPackagesAsync(
+    BasicList<NuGetPackageModel> packages,
+    CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(packages);
+
+        var required = packages
+            .Select(package => (
+                PackageId: package.PackageID,
+                Version: package.Version))
+            .Distinct()
+            .ToArray();
+
+        if (required.Length == 0)
+        {
+            return true;
+        }
+
+        WaitHelper.Status = "packages required by static sites";
+
+        string stagingPath =
+            bb1.Configuration!.StagingPackagePath;
+
+        return await WaitHelper.WaitUntilAsync(async ct =>
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var tracked =
+                await uploadContext.GetAllUploadedPackagesAsync();
+
+            BasicList<UploadedPackageModel> pending = [];
+
+            foreach (var package in required)
+            {
+                var upload = tracked.FirstOrDefault(item =>
+                    string.Equals(
+                        item.PackageId,
+                        package.PackageId,
+                        StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(
+                        item.Version,
+                        package.Version,
+                        StringComparison.OrdinalIgnoreCase));
+
+                if (upload is not null)
+                {
+                    if (upload.Uploaded == false)
+                    {
+                        throw new InvalidOperationException(
+                            $"Required package '{package.PackageId}' " +
+                            $"version {package.Version} has not been uploaded.");
+                    }
+
+                    pending.Add(upload);
+                    continue;
+                }
+
+                bool available =
+                    await NuGetPackageChecker.IsPublicPackageAvailableAsync(
+                        package.PackageId,
+                        package.Version);
+
+                if (available == false)
+                {
+                    throw new InvalidOperationException(
+                        $"Required package '{package.PackageId}' " +
+                        $"version {package.Version} is not available on NuGet " +
+                        "and has no matching pending upload. " +
+                        "Check that this version was staged and submitted.");
+                }
+            }
+
+            return await AllSuccessfulAsync(pending, stagingPath);
+
+        }, interval: TimeSpan.FromHours(2), cancellationToken: cancellationToken);
+    }
+
+    public async Task UploadRequiredPackagesAsync(
+    BasicList<NuGetPackageModel> packages,
+    CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(packages);
+
+        var selected = packages
+            .DistinctBy(
+                package => package.PackageID,
+                StringComparer.OrdinalIgnoreCase)
+            .ToBasicList();
+
+        // Validate everything before changing publication tracking.
+        foreach (var package in selected)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(package.PackageID);
+            ArgumentException.ThrowIfNullOrWhiteSpace(package.Version);
+
+            if (package.FeedType != EnumFeedType.Public)
+            {
+                throw new InvalidOperationException(
+                    $"Required package '{package.PackageID}' is not public.");
+            }
+
+            if (package.IsExcluded || package.Development)
+            {
+                throw new InvalidOperationException(
+                    $"Required package '{package.PackageID}' is excluded " +
+                    "or marked for development.");
+            }
+        }
+
+        if (selected.Count == 0)
+        {
+            return;
+        }
+
+        string stagingPath =
+            bb1.Configuration!.StagingPackagePath;
+
+        var pending = await GetUploadedPackagesAsync(
+            stagingPath,
+            selected,
+            cancellationToken);
+
+        await UploadPackagesAsync(pending, cancellationToken);
+    }
+
     public async Task UploadRequiredPackagesAsync(string requiredBy, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(requiredBy);
@@ -69,7 +194,7 @@ public class NuGetPublicPackageUploadManager(IPackagesContext packagesContext,
             }
             return await AllSuccessfulAsync(uploadedPackages, feedUrl);
 
-        }, cancellationToken: cancellationToken);
+        }, TimeSpan.FromHours(2), cancellationToken: cancellationToken);
     }
     private async Task<bool> AllSuccessfulAsync(BasicList<UploadedPackageModel> uploads, string feedUrl)
     {

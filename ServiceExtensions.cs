@@ -21,7 +21,11 @@ public static class ServiceExtensions
         {
             services.AddSingleton<IPackagesContext, FilePackagesContext>()
                 .AddSingleton<IUploadedPackagesStorage, FileUploadedPackagesStorage>()
-                .AddSingleton<NuGetPublicPackageUploadManager>();
+                .AddSingleton<NuGetPublicPackageUploadManager>()
+                .AddSingleton<
+                    IRequiredPackagePublicationService,
+                    RequiredPackagePublicationService>();
+            ;
             return services;
         }
     }
