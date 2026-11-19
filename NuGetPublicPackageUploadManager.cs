@@ -78,7 +78,7 @@ public class NuGetPublicPackageUploadManager(IPackagesContext packagesContext,
 
             return await AllSuccessfulAsync(pending, stagingPath);
 
-        }, interval: TimeSpan.FromHours(2), cancellationToken: cancellationToken);
+        }, timeout: TimeSpan.FromHours(2), cancellationToken: cancellationToken);
     }
 
     public async Task UploadRequiredPackagesAsync(
@@ -194,7 +194,7 @@ public class NuGetPublicPackageUploadManager(IPackagesContext packagesContext,
             }
             return await AllSuccessfulAsync(uploadedPackages, feedUrl);
 
-        }, TimeSpan.FromHours(2), cancellationToken: cancellationToken);
+        }, timeout: TimeSpan.FromHours(2), cancellationToken: cancellationToken);
     }
     private async Task<bool> AllSuccessfulAsync(BasicList<UploadedPackageModel> uploads, string feedUrl)
     {
